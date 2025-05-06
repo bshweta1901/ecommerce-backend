@@ -50,6 +50,7 @@ class ProductDto:
             "category": fields.Nested(
                 CategoryDto.category_res, description="Category ID of the product"
             ),
+            "is_default_img_path": fields.String(description="Price of the product"),
             "product_status": fields.Nested(
                 PredefinedDto.predefined_res, description="Category ID of the product"
             ),

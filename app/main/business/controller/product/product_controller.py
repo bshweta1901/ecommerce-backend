@@ -27,7 +27,8 @@ class ProductAdd(Resource):
         args = create_product_parser.parse_args()
         data = json.loads(args["data"])
         images = args.get("images", None)
-        return service.create_entity(data, images)
+        defaultImage = args.get("defaultImage", None)
+        return service.create_entity(data, images, defaultImage)
 
 
 @api.route("/list")

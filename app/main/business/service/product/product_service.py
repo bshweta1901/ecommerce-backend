@@ -15,14 +15,14 @@ from sqlalchemy.orm import aliased
 product_aliased = aliased(ProductMaster)
 
 
-def create_entity(data, files):
+def create_entity(data, files, defaultImage):
     try:
         with session_scope() as session:
             sku = data.get("sku")
             if sku is not None:
                 existing_product = (
                     session.query(ProductMaster)
-                    .filter(ProductMaster.is_delete == "N", ProductMaster.sku == sku)
+                    .filter(ProductMaster.is_delete == False, ProductMaster.sku == sku)
                     .first()
                 )
                 if existing_product:
@@ -39,6 +39,16 @@ def create_entity(data, files):
             product = ProductMaster(**data)
             session.add(product)
             session.flush()  # To get product.id
+            if defaultImage:
+                # Upload the file and create a document
+                document_master = upload_document(file, "uploads/products/", "product")
+                doc = ProductDocument(
+                    document_id=document_master.id,
+                    product_id=product.id,
+                    is_default=True,
+                )
+                session.add(doc)
+                session.flush()
 
             if files:
                 for file in files:
@@ -49,7 +59,9 @@ def create_entity(data, files):
                     doc = ProductDocument(
                         document_id=document_master.id, product_id=product.id
                     )
-                    product.product_images.append(doc)
+                    session.add(doc)
+                    session.flush()
+            session.commit()
 
             return {
                 "message": "Product saved successfully",
