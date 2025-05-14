@@ -62,7 +62,8 @@ class ProductDetail(Resource):
         args = create_product_parser.parse_args()
         data = json.loads(args["data"])
         images = args.get("images", None)
-        return service.update_entity(id, data, images)
+        defaultImage = args.get("defaultImage", None)
+        return service.update_entity(id, data, images, defaultImage)
 
     @api.response(200, "Product deleted successfully")
     def delete(self, id):

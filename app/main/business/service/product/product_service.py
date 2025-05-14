@@ -41,7 +41,9 @@ def create_entity(data, files, defaultImage):
             session.flush()  # To get product.id
             if defaultImage:
                 # Upload the file and create a document
-                document_master = upload_document(file, "uploads/products/", "product")
+                document_master = upload_document(
+                    defaultImage, "uploads/products/", "product", session
+                )
                 doc = ProductDocument(
                     document_id=document_master.id,
                     product_id=product.id,
@@ -54,7 +56,7 @@ def create_entity(data, files, defaultImage):
                 for file in files:
                     # Upload the file and create a document
                     document_master = upload_document(
-                        file, "uploads/products/", "product"
+                        file, "uploads/products/", "product", session
                     )
                     doc = ProductDocument(
                         document_id=document_master.id, product_id=product.id
@@ -74,20 +76,40 @@ def create_entity(data, files, defaultImage):
         raise CustomException(str(e), 500)
 
 
-def update_entity(id, data, files):
+def update_entity(id, data, files, defaultImage):
     entity = ProductMaster.query.filter_by(id=id, is_delete=False).first()
 
     if not entity:
         return {"message": "Product not found."}, 404
     with session_scope() as session:
+        # Update ProductDocument entries
+        session.query(ProductDocument).filter(ProductDocument.product_id == id).update(
+            {ProductDocument.is_default: False}, synchronize_session=False
+        )
         for key, value in data.items():
             setattr(entity, key, value)
         session.merge(entity)
         session.flush()
+        if data.get("default_image_id"):
+            session.query(ProductDocument).filter(
+                ProductDocument.id == data.get("default_image_id")
+            ).update({ProductDocument.is_default: True}, synchronize_session=False)
+        if defaultImage:
+            # Upload the file and create a document
+            document_master = upload_document(
+                defaultImage, "uploads/products/", "product", session
+            )
+            doc = ProductDocument(
+                document_id=document_master.id, product_id=id, is_default=True
+            )
+            session.add(doc)
+            session.flush()
         if files:
             for file in files:
                 # Upload the file and create a document
-                document_master = upload_document(file, "uploads/products/", "product")
+                document_master = upload_document(
+                    file, "uploads/products/", "product", session
+                )
                 doc = ProductDocument(document_id=document_master.id, product_id=id)
                 session.add(doc)
                 session.flush()

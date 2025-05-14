@@ -99,6 +99,13 @@ class ProductDto:
         help="Product Images (multiple allowed)",
     )
     create_product_parser.add_argument(
+        "defaultImage",
+        type=FileStorage,
+        location="files",
+        required=False,  # 👈 important to accept multiple images
+        help="Product Images (multiple allowed)",
+    )
+    create_product_parser.add_argument(
         "data",
         type=str,
         required=False,
